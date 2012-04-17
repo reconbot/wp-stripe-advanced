@@ -4,11 +4,13 @@ Donate link: http://www.noeltock.com
 Tags: stripe, paypal, payment, pay, transfer, charge, widget, form, chargly, recurly, gravatar, avatar, recent, donations
 Requires at least: 3.1
 Tested up to: 3.3
-Stable tag: 1.2
+Stable tag: 1.3.2
 
 WP Stripe provides a payment form and recent donor widget by utilizing Stripe.com, the awesome alternative to PayPal.
 
 == Description ==
+
+Now works on **any theme**.
 
 WP Stripe is a plugin designed to handle single payments using [Stripe](http://www.stripe.com/), a refreshing and accessible alternative to PayPal. This is particularly awesome for charities, non-profit organizations and other websites accepting smaller payments where transaction fees are unnecessarily high. [Stripe](http://www.stripe.com/) on the other hand charges **2.9% + 30 cents per successful charge**, with no monthly or setup fees.
 
@@ -25,14 +27,9 @@ This plugin allows you to do a number of things (see screenshots too):
 
 Stripe is currently only available to users accepting payments in the US (i.e. in order to receive money, you must reside in the US), however the payee or cardholder can be anywhere in the world.
 
-= Feedback =
+= Twitter =
 
-As this is a new plugin, there are likely to be a few issues. Kindly post any issues, questions or suggestions on the [WP-Stripe forums](http://wordpress.org/tags/wp-stripe?forum_id=10) .
-
-= Roadmap =
-
-* Project Donations (i.e. with limits & progress bars)
-* Recurring Payments
+Follow me for updates at [@noeltock](http://www.twitter.com/noeltock)
 
 == Installation ==
 
@@ -68,6 +65,28 @@ WP Stripe is not intended to be used as an e-commerce solution, but rather to ha
 
 == Changelog ==
 
+= 1.3.2 =
+
+* Remove function
+
+= 1.3.1 =
+
+* Quick fix for sites running older PHP
+
+= 1.3 =
+
+* Added Pop-up / Modal Box for making a payment (better plug & play), you can still use the inline form with `[wp-legacy-stripe]`
+* Added cards accepted below button, to disable use `[wp-stripe cards="false"]`
+* Simple Form Validation
+* "Submit Payment" button is replaced with spinner onclick (avoids multiple clicks)
+* Added Button on transactions page to delete all Test transactions
+* Added Name of person paying to Stripe charge
+* Fix: Issue with Shortcode bumping to the top of a page
+* Fix : CSS Hardening of Form (to make it more compatible with your theme)
+
+= 1.2 =
+* Small fix
+
 = 1.1 =
 * Few ReadMe Tweaks
 
@@ -79,12 +98,17 @@ WP Stripe is not intended to be used as an e-commerce solution, but rather to ha
 
 == Upgrade Notice ==
 
-= 1.2 =
+= 1.3 =
+* This will change the display of your current stripe shortcode to a button that will pop up a modal box. You can continue using the old form within your content by using: `[wp-legacy-stripe]`
 
-* Fixed issue with PHP < 5.3
-* Removed name from input fields for POST (on CC details)
+= 1.2 =
+* Small fix
 
 = 1.1 =
 * Few ReadMe Tweaks
 
 = 1.0 =
+
+== Feedback & Bugs ==
+
+As this is a new plugin, there are likely to be a few issues. Kindly post any issues, questions or suggestions on the [WP-Stripe forums](http://wordpress.org/tags/wp-stripe?forum_id=10) .

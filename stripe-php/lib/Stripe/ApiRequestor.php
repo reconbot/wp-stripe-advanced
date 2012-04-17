@@ -58,21 +58,23 @@ class Stripe_ApiRequestor
   public function handleApiError($rbody, $rcode, $resp)
   {
     if (!is_array($resp) || !isset($resp['error']))
-      throw new Stripe_ApiError("Invalid response object from API: $rbody (HTTP response code was $rcode)");
+      throw new Stripe_ApiError("Invalid response object from API: $rbody (HTTP response code was $rcode)", $rcode, $rbody, $resp);
     $error = $resp['error'];
     switch ($rcode) {
     case 400:
     case 404:
       throw new Stripe_InvalidRequestError(isset($error['message']) ? $error['message'] : null,
-					    isset($error['param']) ? $error['param'] : null);
+                                           isset($error['param']) ? $error['param'] : null,
+                                           $rcode, $rbody, $resp);
     case 401:
-      throw new Stripe_AuthenticationError(isset($error['message']) ? $error['message'] : null);
+      throw new Stripe_AuthenticationError(isset($error['message']) ? $error['message'] : null, $rcode, $rbody, $resp);
     case 402:
       throw new Stripe_CardError(isset($error['message']) ? $error['message'] : null,
-				  isset($error['param']) ? $error['param'] : null,
-				  isset($error['code']) ? $error['code'] : null);
+                                 isset($error['param']) ? $error['param'] : null,
+                                 isset($error['code']) ? $error['code'] : null,
+                                 $rcode, $rbody, $resp);
     default:
-      throw new Stripe_ApiError(isset($error['message']) ? $error['message'] : null);
+      throw new Stripe_ApiError(isset($error['message']) ? $error['message'] : null, $rcode, $rbody, $resp);
     }
   }
 
@@ -105,7 +107,7 @@ class Stripe_ApiRequestor
     try {
       $resp = json_decode($rbody, true);
     } catch (Exception $e) {
-      throw new Stripe_ApiError("Invalid response body from API: $rbody (HTTP response code was $rcode)");
+      throw new Stripe_ApiError("Invalid response body from API: $rbody (HTTP response code was $rcode)", $rcode, $rbody);
     }
 
     if ($rcode < 200 || $rcode >= 300) {
@@ -146,12 +148,20 @@ class Stripe_ApiRequestor
     $opts[CURLOPT_RETURNTRANSFER] = true;
     $opts[CURLOPT_HTTPHEADER] = $headers;
     $opts[CURLOPT_USERPWD] = $myApiKey . ':';
-    $opts[CURLOPT_CAINFO] = dirname(__FILE__) . '/../data/ca-certificates.crt';
     if (!Stripe::$verifySslCerts)
       $opts[CURLOPT_SSL_VERIFYPEER] = false;
 
     curl_setopt_array($curl, $opts);
     $rbody = curl_exec($curl);
+
+    $errno = curl_errno($curl);
+    if ($errno == CURLE_SSL_CACERT || $errno == CURLE_SSL_PEER_CERTIFICATE) {
+      array_push($headers, 'X-Stripe-Client-Info: {"ca":"using Stripe-supplied CA bundle"}');
+      curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+      curl_setopt($curl, CURLOPT_CAINFO,
+                  dirname(__FILE__) . '/../data/ca-certificates.crt');
+      $rbody = curl_exec($curl);
+    }
 
     if ($rbody === false) {
       $errno = curl_errno($curl);

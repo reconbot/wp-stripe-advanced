@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Display Stripe JS Code
+ *
+ * @since 1.0
+ *
+ */
 
 function wp_stripe_js() {
 
@@ -22,6 +28,8 @@ function wp_stripe_js() {
 
     Stripe.setPublishableKey('<?php echo $apikey; ?>');
 
+    // PUSH Name & Description
+
     function stripeResponseHandler(status, response) {
         if (response.error) {
             console.log(status);
@@ -42,6 +50,8 @@ function wp_stripe_js() {
         }
     }
 
+    // Validate Form upon Submit
+
     jQuery(document).ready(function() {
         jQuery("#wp-stripe-payment-form").submit(function(event) {
 
@@ -52,7 +62,9 @@ function wp_stripe_js() {
             jQuery('.stripe-submit-button').attr("disabled", "disabled");
 
             var amount = jQuery('.wp-stripe-card-amount').val() * 100; //amount you want to charge in cents
+
             Stripe.createToken({
+                name: jQuery('.wp-stripe-name').val(),
                 number: jQuery('.card-number').val(),
                 cvc: jQuery('.card-cvc').val(),
                 exp_month: jQuery('.card-expiry-month').val(),
@@ -64,13 +76,86 @@ function wp_stripe_js() {
             return false;
         });
     });
+
+
+    jQuery(document).ready(function() {
+
+            // Validate Credit Card # & CVC during filling out of Form
+
+            jQuery('.card-number').focusout( function(){
+
+                var $field;
+                var $card;
+
+                $field = jQuery('.card-number').val();
+                $card = Stripe.validateCardNumber($field);
+                if ( $card == true ) {
+                    jQuery('.card-number').removeClass('stripe-invalid');
+                    jQuery('.card-number').addClass('stripe-valid');
+                } else {
+                    jQuery('.card-number').removeClass('stripe-valid');
+                    jQuery('.card-number').addClass('stripe-invalid');
+                }
+            });
+
+            jQuery('.card-cvc').focusout( function(){
+
+                var $field;
+                var $cvc;
+
+                $field = jQuery('.card-cvc').val();
+                $cvc = Stripe.validateCVC($field);
+                if ( $cvc == true ) {
+                    jQuery('.card-cvc').removeClass('stripe-invalid');
+                    jQuery('.card-cvc').addClass('stripe-valid');
+                } else {
+                    jQuery('.card-cvc').removeClass('stripe-valid');
+                    jQuery('.card-cvc').addClass('stripe-invalid');
+                }
+            });
+
+            // Change Submit button after Click
+
+            // TODO Needs to revert upon fail
+
+            /*
+
+            jQuery('form#wp-stripe-payment-form button[type="submit"]').click(function() {
+                var stripeheight = jQuery(this).height();
+                var stripewidth = jQuery(this).width();
+                console.log(stripeheight);
+                console.log(stripewidth);
+                jQuery(this).css('display', 'none');
+                jQuery('form#wp-stripe-payment-form .stripe-spinner').css('display', 'block');
+                jQuery('form#wp-stripe-payment-form .stripe-spinner').width(stripewidth);
+                jQuery('form#wp-stripe-payment-form .stripe-spinner').height(stripeheight);
+
+            });
+
+            */
+
+    });
+
+
+
     </script>
 
     <?php
 
 }
 
+/**
+ * Display Stripe Form
+ *
+ * @return string Stripe Form (DOM)
+ *
+ * @since 1.0
+ *
+ */
+
 function wp_stripe_form() {
+
+    ob_start();
 
     echo '<!-- Start WP-Stripe --><div id="wp-stripe-wrap">';
 
@@ -91,66 +176,36 @@ function wp_stripe_form() {
     ?>
 
     <form action="" method="POST" id="wp-stripe-payment-form">
-    <h2 class="stripe-header"><?php $options = get_option('wp_stripe_options'); echo $options['stripe_header']; ?></h2>
     <div class="wp-stripe-details">
             <div class="wp-stripe-notification wp-stripe-failure payment-errors" style="display:none"></div>
             <?php wp_stripe_charge_initiate(); ?>
         <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('Name', 'wp-stripe'); ?></label>
-            </div>
-            <div class="stripe-row-right">
-                <input type="text" name="wp_stripe_name" class="" value="<?php echo $stripe_post_name; ?>" />
-            </div>
+                <input type="text" name="wp_stripe_name" class="wp-stripe-name" value="<?php echo $stripe_post_name; ?>" placeholder="<?php _e('Name', 'wp-stripe'); ?> *" />
         </div>
         <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('E-mail', 'wp-stripe'); ?></label>
-            </div>
-            <div class="stripe-row-right">
-                <input type="text" name="wp_stripe_email" value="<?php echo $stripe_post_email; ?>" />
-            </div>
+                <input type="text" name="wp_stripe_email" class="wp-stripe-email" value="<?php echo $stripe_post_email; ?>" placeholder="<?php _e('E-mail', 'wp-stripe'); ?>" />
         </div>
         <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('Comment', 'wp-stripe'); ?></label>
-            </div>
-            <div class="stripe-row-right">
-                <textarea name="wp_stripe_comment"><?php echo $stripe_post_comment; ?></textarea>
-            </div>
+                <textarea name="wp_stripe_comment" class="wp-stripe-comment" placeholder="<?php _e('Comment', 'wp-stripe'); ?>"><?php echo $stripe_post_comment; ?></textarea>
         </div>
     </div>
     <div class="wp-stripe-card">
         <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('Amount (USD)', 'wp-stripe'); ?> *</label>
-            </div>
-            <div class="stripe-row-right">
-                <input type="text" name="wp_stripe_amount" autocomplete="off" class="wp-stripe-card-amount" />
-            </div>
+                <input type="text" name="wp_stripe_amount" autocomplete="off" class="wp-stripe-card-amount" id="wp-stripe-card-amount" placeholder="<?php _e('Amount (USD)', 'wp-stripe'); ?> *" />
+        </div>
+        <div class="stripe-row">
+                <input type="text" name="wp_stripe_cardn" autocomplete="off" class="card-number" placeholder="<?php _e('Card Number', 'wp-stripe'); ?> *" />
+        </div>
+        <div class="stripe-row">
+
         </div>
         <div class="stripe-row">
             <div class="stripe-row-left">
-                <label><?php _e('Card Number', 'wp-stripe'); ?> *</label>
+                <input type="text" name="wp_stripe_cardcvc" autocomplete="off" class="card-cvc" placeholder="<?php _e('CVC Number', 'wp-stripe'); ?> *" />
             </div>
             <div class="stripe-row-right">
-                <input type="text" autocomplete="off" class="card-number" />
-            </div>
-        </div>
-        <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('CVC Number', 'wp-stripe'); ?> *</label>
-            </div>
-            <div class="stripe-row-right">
-                <input type="text" autocomplete="off" class="card-cvc" />
-            </div>
-        </div>
-        <div class="stripe-row">
-            <div class="stripe-row-left">
-                <label><?php _e('Expiration', 'wp-stripe'); ?> *</label>
-            </div>
-            <div class="stripe-row-right">
-            <select class="card-expiry-month">
+                <span class="stripe-expiry">EXPIRY</span>
+            <select name="wp_stripe_cardem" class="card-expiry-month">
                 <option value="1">01</option>
                 <option value="2">02</option>
                 <option value="3">03</option>
@@ -164,8 +219,8 @@ function wp_stripe_form() {
                 <option value="11">11</option>
                 <option value="12">12</option>
             </select>
-            <span> / </span>
-            <select class="card-expiry-year">
+            <span></span>
+            <select name="wp_stripe_cardem" class="card-expiry-year">
             <?php
                 $year = date(Y,time());
                 $num = 1;
@@ -196,14 +251,23 @@ function wp_stripe_form() {
         <input type="hidden" name="wp_stripe_form" value="1"/>
 
         <button type="submit" class="stripe-submit-button">Submit Payment</button>
+        <div class="stripe-spinner"></div>
 
-        <div class="wp-stripe-poweredby">Payments powered by <a href="http://wordpress.org/extend/plugins/wp-stripe" target="_blank">WP-Stripe</a>. No card information is stored on this server.</div>
 
     </form>
 
-    </div><!-- End WP-Stripe -->
+    </div>
+
+    <div class="wp-stripe-poweredby">Payments powered by <a href="http://wordpress.org/extend/plugins/wp-stripe" target="_blank">WP-Stripe</a>. No card information is stored on this server.</div>
+
+    <!-- End WP-Stripe -->
 
     <?php
+
+    $output = ob_get_contents();
+    ob_end_clean();
+
+    return $output;
 
 }
 
